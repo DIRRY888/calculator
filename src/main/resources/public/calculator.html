@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.8">
+    <title>Calculator</title>
+    <style>
+        /* 适应手机大小的计算器页面样式，可按需扩展和美化 */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        label {
+            width: 40%;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        input,
+        select {
+            width: 50%;
+            padding: 5px;
+        }
+
+        button {
+            width: 40%;
+            padding: 5px 10px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        #tableData {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ccc;
+            padding: 5px;
+            text-align: center;
+            width: auto;
+        }
+
+        table tr:first-child th {
+            text-align: left;
+            text-align: center;
+        }
+
+        table td.table-input {
+            width: 80px; /* 假设设置输入框所在单元格宽度为80px，可按需调整 */
+        }
+
+        /* 弹出窗口样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        select#inputMethod {
+            width: 100%;
+        }
+
+        /* 申报价值部分样式 */
+        .value-row {
+            display: flex;
+            flex-direction: column;
+            width: 80%;
+            margin-top: 10px;
+            align-items: center;
+            justify-content: flex-start; /* 添加这一行，让内部元素从行首开始排列 */
+        }
+
+        .value-item {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .value-item label {
+            width: 40%;
+            text-align: left;
+        }
+
+        .value-item input {
+            width: 50%;
+            padding: 5px;
+        }
+
+        .value-row button.delete-row {
+            width: auto;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            margin-left: auto; /* 添加这一行，让按钮自动靠右 */
+        }
+        .value-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            flex-grow: 1; /* 添加这一行，让该元素占据剩余可用空间 */
+        }
+
+        button#addValueRow {
+            width: 50%;
+            padding: 5px 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            font-size: 10px; /* 进一步调小字体大小 */
+            padding: 1px 3px; /* 进一步调小内边距 */
+        }
+
+        @media (max-width: 768px) {
+            table[style*="table-layout: fixed"] {
+                font-size: 12px;
+                width: auto;
+                table-layout: auto;
+                padding: 0;
+                margin: 0;
+            }
+
+            table[style*="table-layout: fixed"] th,
+            table[style*="table-layout: fixed"] td {
+                padding: 3px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+
+<form>
+    <h1>Calculator</h1>
+    <!-- 新增输入参数 -->
+    <div class="form-group">
+        <label for="containerLoadingType">
+            Container Loading Type
+            <span>(集装箱装载类型)：</span>
+        </label>
+        <select id="containerLoadingType">
+            <option value="FCL">FCL（整箱装载）</option>
+            <option value="LCL">LCL（拼箱装载）</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="POL">
+            POL
+            <span>(装货港)：</span>
+        </label>
+        <select id="POL">
+            <option value="Shanghai">Shanghai（上海）</option>
+            <option value="Xiamen">Xiamen（厦门）</option>
+            <option value="Qingdao">Qingdao（青岛）</option>
+            <option value="Tianjin">Tianjin（天津）</option>
+            <option value="Fuzhou">Fuzhou（福州）</option>
+            <option value="Zhuhai">Zhuhai（珠海）</option>
+            <option value="Lianyungang">Lianyungang（连云港）</option>
+            <option value="Hongkong">Hongkong（香港）</option>
+            <option value="Yantian">Yantian（盐田）</option>
+            <option value="Ningbo">Ningbo（宁波）</option>
+            <option value="Shenzhen">Shenzhen（深圳）</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="cargoType">
+            Cargo Type
+            <span>(货件类型)：</span>
+        </label>
+        <select id="cargoType">
+            <option value="Sort">Sort（标准件）</option>
+            <option value="Non-sort">Non-sort（非标准件）</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="volume">
+            Volume
+            <span>（订舱总体积，单位：CBM）:</span>
+        </label>
+        <input type="number" id="volume" required min="0">
+    </div>
+    <div class="form-group">
+        <label for="weight">
+            Weight
+            <span>（订舱总重量，单位：KG）:</span>
+        </label>
+        <input type="number" id="weight" required min="0">
+    </div>
+    <div class="form-group">
+        <label for="carton">Carton:</label>
+        <input type="number" id="carton" required min="0">
+    </div>
+
+    <!-- 存储周期相关栏目 -->
+    <h3>存储周期</h3>
+    <div class="form-group">
+        <label for="startDate">
+            Start Date
+            <span>（存储开始时间）:</span>
+        </label>
+        <input type="date" id="startDate" required>
+    </div>
+    <div class="form-group">
+        <label for="endDate">
+            End Date
+            <span>（存储结束时间）:</span>
+        </label>
+        <input type="date" id="endDate" required>
+    </div>
+    <div class="form-group">
+        <label for="storageDays">
+            AWD Storage Days
+            <span>（AWD库内存储天数，单位：Days）:</span>
+        </label>
+        <input type="number" id="storageDays" required>
+    </div>
+    <!-- 申报价值部分 -->
+    <div id="valueRows">
+        <div class="value-row">
+            <div class="value-wrapper">
+                <label for="value1">总申报货物1价值（单位：USD）:</label>
+                <input type="number" id="value1">
+            </div>
+            <button class="delete-row delete-button" onclick="deleteRow(this)">X</button>
+            <div class="value-wrapper">
+                <label for="dutyRate1">进口清关税率（%）:</label>
+                <input type="number" id="dutyRate1" step="0.01">
+            </div>
+        </div>
+    </div>
+    <button type="button" id="addValueRow" onclick="addValue()">+</button>
+    <!-- 输入方式选择 -->
+    <div class="form-group">
+        <label for="inputMethod">入库配置费输入方式:</label>
+        <select id="inputMethod" onchange="handleInputMethodChange()">
+            <option value="table">通过表格填写</option>
+            <option value="direct">直接输入IB fee</option>
+        </select>
+    </div>
+    <!-- 表格部分，初始隐藏 -->
+    <table id="tableData" style="display:none;">
+        <tr>
+            <th rowspan="1">ASIN尺寸</th>
+            <th>单个ASIN重量</th>
+            <th>UNITS</th>
+        </tr>
+        <tr>
+            <th rowspan="1">小号标准件</th>
+            <th>0.45 kg or less/ 16 oz or less</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th rowspan="4">大号标准件</th>
+            <th>0.34 kg or less/ 12 oz or less</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>0.34+ kg to 0.68 kg/ 12+ oz to 1.5 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>0.68+ kg to 1.36 kg/ 1.5+ lb to 3 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>1.36+ kg to 9.07 kg/ 3+ lb to 20 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th rowspan="5">大号大件</th>
+            <th>2.27 kg or less/ 5 lb or less</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>2.27+ kg to 5.44 kg/ 5+ lb to 12 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>5.44+ kg to 12.70 kg/ 12+ lb to 28 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>12.70+ kg to 19.05 kg/ 28+ lb to 42 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+        <tr>
+            <th>19.05+ kg to 22.68 kg/ 42+ lb to 50 lb</th>
+            <td><input type="number" value="0" class="table-input"></td>
+        </tr>
+    </table>
+    <!-- 直接输入IB fee部分，初始隐藏 -->
+    <div class="form-group" id="directInput" style="display:none;">
+        <label for="ibFee">
+            IB fee
+            <span>（单位：USD）:</span>
+        </label>
+        <input type="number" id="ibFee" placeholder="请输入IB fee">
+    </div>
+    <button type="button" onclick="submitForm()">Submit</button>
+</form>
+<div id="result"></div>
+<!-- 弹出窗口的HTML结构 -->
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="modalTableContainer"></div>
+    </div>
+</div>
+
+</body>
+
+</html>

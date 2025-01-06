@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.FclPriceMapper">
+    <insert id="insertOrUpdate" parameterType="map">
+        INSERT INTO fcl_price (
+            VLOOKUP, product, pol, fc, destination,
+            sort_type, speed_mode, dest_country, currency,
+            effective_date, clearance,freight,
+            fcl_price_per_ctn, fx_usd_cny,
+            fx_eur_cny, fx_gbp_cny
+        ) VALUES (
+                     #{data.VLOOKUP}, #{data.product}, #{data.pol}, #{data.fc},
+                     #{data.destination}, #{data.sort_type}, #{data.speed_mode},
+                     #{data.dest_country}, #{data.currency}, #{data.effective_date},
+                     #{data.clearance}, #{data.freight},
+                     #{data.fcl_price_per_ctn}, #{data.fx_usd_cny},
+                     #{data.fx_eur_cny}, #{data.fx_gbp_cny}
+        )
+            ON DUPLICATE KEY UPDATE
+                                 product = VALUES(product),
+                                 pol = VALUES(pol),
+                                 fc = VALUES(fc),
+                                 destination = VALUES(destination),
+                                 sort_type = VALUES(sort_type),
+                                 speed_mode = VALUES(speed_mode),
+                                 dest_country = VALUES(dest_country),
+                                 currency = VALUES(currency),
+                                 effective_date = VALUES(effective_date),
+                                 clearance = VALUES(clearance),
+                                 freight = VALUES(freight),
+                                 fcl_price_per_ctn = VALUES(fcl_price_per_ctn),
+                                 fx_usd_cny = VALUES(fx_usd_cny),
+                                 fx_eur_cny = VALUES(fx_eur_cny),
+                                 fx_gbp_cny = VALUES(fx_gbp_cny)
+    </insert>
+
+    <select id="getFclPriceByParams" resultMap="FclPriceResultMap">
+        select * from fcl_price
+        where pol = #{pol}
+          and sort_type = #{sort_type}
+          and destination = #{destination}
+          and product = #{product}
+          and speed_mode = #{speed_mode}
+    </select>
+
+    <!-- 定义结果映射，根据实际表字段和实体类属性对应关系调整 -->
+    <resultMap id="FclPriceResultMap" type="com.example.mapper.FclPriceEntity">
+        <id property="id" column="id"/>
+        <result property="vlookup" column="vlookup"/>
+        <result property="product" column="product"/>
+        <result property="pol" column="pol"/>
+        <result property="fc" column="fc"/>
+        <result property="destination" column="destination"/>
+        <result property="sort_type" column="sort_type"/>
+        <result property="speed_mode" column="speed_mode"/>
+        <result property="dest_country" column="dest_country"/>
+        <result property="currency" column="currency"/>
+        <result property="effective_date" column="effective_date"/>
+        <result property="clearance" column="clearance"/>
+        <result property="freight" column="freight"/>
+        <result property="fcl_price_per_ctn" column="fcl_price_per_ctn"/>
+        <result property="fx_usd_cny" column="fx_usd_cny"/>
+        <result property="fx_eur_cny" column="fx_eur_cny"/>
+        <result property="fx_gbp_cny" column="fx_gbp_cny"/>
+    </resultMap>
+
+    <select id="getFclPriceByParamsAWD" resultMap="FclPriceResultMap">
+        select * from fcl_price
+        where pol = #{pol}
+          and destination = #{destination}
+          and product = #{product}
+    </select>
+
+    <select id="getAll" resultType="map">
+        SELECT * FROM fcl_price
+    </select>
+
+</mapper>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <style>
+    /* 简单的样式，可根据需求美化 */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+<!-- 登录表单 -->
+<form id="loginForm">
+  <label for="username">Username:</label>
+  <input type="text" id="username" required>
+  <label for="password">Password:</label>
+  <input type="password" id="password" required>
+  <button type="submit">Login</button>
+  <button id="forgotPasswordButton">忘记密码</button>
+</form>
+<div id="messageDiv" style="text-align: center; margin-top: 10px; color: red;"></div>
+<!-- 忘记密码表单，初始隐藏，点击"忘记密码"按钮时显示 -->
+<form id="forgotPasswordForm" style="display: none;">
+  <label for="forgotUsername">Username:</label>
+  <input type="text" id="forgotUsername" required>
+  <button id="getConfirmationCodeButton">获取确认码</button>
+  <label for="newPassword">New Password:</label>
+  <input type="password" id="newPasswordForForgot" required>
+  <button id="resetPasswordButton">重置密码</button>
+</form>
+<!-- 新密码设置表单，初始隐藏，当遇到 NEW_PASSWORD_REQUIRED 挑战时显示 -->
+<form id="newPasswordForm" style="display: none;">
+  <label for="userId">User ID:</label>
+  <input type="text" id="userId" required>
+  <label for="newPassword">New Password:</label>
+  <input type="password" id="newPassword" required>
+  <button id="setNewPasswordButton">设置新密码</button>
+</form>
+<!-- 添加一个id为content的div元素用于显示获取到的页面内容 -->
+<div id="content"></div>
+<script>
+  // 处理登录表单提交事件
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    // 向 /dev/login 路径发送登录请求
+    fetch('/dev/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.challengeName === 'NEW_PASSWORD_REQUIRED') {
+                // 如果需要设置新密码，显示新密码设置表单，并填充用户ID（从挑战参数中获取，这里简化示例直接使用，实际可能需要更准确处理）
+                const userId = data.challengeParameters.USER_ID_FOR_SRP;
+                document.getElementById('userId').value = userId;
+                document.getElementById('newPasswordForm').style.display = 'block';
+              } else if (data.success) {
+                // 保存token到本地存储（这里假设返回的token字段为idToken，根据后端实际返回修改）
+                localStorage.setItem('idToken', data.idToken);
+                const idToken = localStorage.getItem('idToken');
+                // 如果验证成功，跳转到相应页面（假设路径是 /dev/calculator，可按需修改）
+                // 添加以下代码将accessToken添加到请求头中
+                fetch('/dev/calculator', {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': idToken
+                  }
+                })
+                        .then(response => {
+                          if (response.ok) {
+                            return response.text();
+                          } else {
+                            throw new Error('Unauthorized problem');
+                          }
+                        })
+                        .then(html => {
+                          // 设置页面HTML为获取到的calculator.html内容
+                          document.body.innerHTML = html;
+                          const script = document.createElement('script');
+                          script.src = "https://7x0mxo40o4.execute-api.ap-northeast-2.amazonaws.com/dev/calculator.js"
+                          document.body.prepend(script)
+                          // 使用fetch获取dev/calculator.js的JS代码
+                          // return fetch('/dev/calculator.js')
+                          //         .then(response => response.text())
+                          //         .then(jsCode => {
+                          //           // 创建script标签并插入JS代码
+                          //           const script = document.createElement('script');
+                          //           script.textContent = jsCode;
+                          //           document.body.prepend(script)
+                          //           // 在这里直接调用函数来初始化页面功能（假设函数名为initCalculator）
+                          //           document.addEventListener('DOMContentLoaded', function () {
+                          //             console.log('准备调用initCalculator函数');
+                          //             window.initCalculator();
+                          //           });
+                          //         });
+                        })
+                        .catch(error => {
+                          console.error('Error:', error);
+                          localStorage.removeItem('idToken');
+                        });
+              } else {
+                alert('Login failed. Please check your credentials.');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred during login.');
+            });
+  });
+
+  // 处理登录表单中的忘记密码按钮点击事件
+  document.getElementById('forgotPasswordButton').addEventListener('click', function () {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('forgotPasswordForm').style.display = 'block';
+  });
+
+  // 处理忘记密码表单中的获取确认码按钮点击事件
+  document.getElementById('getConfirmationCodeButton').addEventListener('click', function () {
+    const username = document.getElementById('forgotUsername').value;
+    // 向 /dev/forgot-password 路径发送忘记密码请求，获取确认码
+    fetch('/dev/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username
+      })
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message);
+              } else {
+                alert(data.errorMessage);
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              alert('An error occurred while requesting the confirmation code.');
+            });
+  });
+
+  // 处理忘记密码表单中的重置密码按钮点击事件
+  document.getElementById('resetPasswordButton').addEventListener('click', function (e) {
+    e.preventDefault();
+    const username = document.getElementById('forgotUsername').value;
+    const newPassword = document.getElementById('newPasswordForForgot').value;
+    // 向 /dev/set-new-password 路径发送设置新密码请求
+    fetch('/dev/set-new-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        newPassword: newPassword
+      })
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // 密码重置成功，隐藏忘记密码表单，显示登录表单
+                document.getElementById('forgotPasswordForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                alert('密码已重置，请重新登录。');
+              } else {
+                alert('重置密码失败，请检查新密码。');
+              }
+            })
+            .catch(error => {
+              console.error('Error resetting password:', error);
+              alert('An error occurred while resetting the password.');
+            });
+  });
+
+  // 处理新密码设置表单中的设置新密码按钮点击事件
+  document.getElementById('setNewPasswordButton').addEventListener('click', function (e) {
+    e.preventDefault();
+    const userId = document.getElementById('userId').value;
+    const newPassword = document.getElementById('newPassword').value;
+    // 向 /dev/set-new-password 路径发送设置新密码请求
+    fetch('/dev/set-new-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: userId,
+        newPassword: newPassword
+      })
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // 新密码设置成功，隐藏新密码设置表单，重新发起登录请求（可按需优化此处逻辑）
+                document.getElementById('newPasswordForm').style.display = 'none';
+                window.location.href = '/dev';
+              } else {
+                const messageDiv = document.getElementById('messageDiv');
+                messageDiv.textContent = data.errorMessage || 'Failed to set new password. Please try again.';
+              }
+            })
+            .catch(error => {
+              console.error('Error setting new password:', error);
+              const messageDiv = document.getElementById('messageDiv');
+              messageDiv.textContent = data.errorMessage || 'Failed to set new password. Please try again.';
+            });
+  });
+</script>
+</body>
+
+</html>

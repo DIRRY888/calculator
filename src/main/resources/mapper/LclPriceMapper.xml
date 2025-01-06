@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.LclPriceMapper">
+
+    <insert id="insertOrUpdate" parameterType="map">
+        INSERT INTO lcl_price (
+            VLOOKUP, product, pol, fc, destination,
+            sort_type, speed_mode, region, currency,
+            effective_date, export_clearance_per_bl,
+            import_clearance_per_bl, less_than_5cbm_per_cbm,
+            between_5_10cbm_per_cbm, between_10_15cbm_per_cbm,
+            greater_than_15cbm_per_cbm, fx_usd_cny,
+            fx_eur_cny, fx_gbp_cny
+        ) VALUES (
+                     #{data.VLOOKUP}, #{data.product}, #{data.pol}, #{data.fc},
+                     #{data.destination}, #{data.sort_type}, #{data.speed_mode},
+                     #{data.region}, #{data.currency}, #{data.effective_date},
+                     #{data.export_clearance_per_bl}, #{data.import_clearance_per_bl},
+                     #{data.less_than_5cbm_per_cbm}, #{data.between_5_10cbm_per_cbm},
+                     #{data.between_10_15cbm_per_cbm}, #{data.greater_than_15cbm_per_cbm},
+                     #{data.fx_usd_cny}, #{data.fx_eur_cny}, #{data.fx_gbp_cny}
+                 )
+            ON DUPLICATE KEY UPDATE
+                                 product = VALUES(product),
+                                 pol = VALUES(pol),
+                                 fc = VALUES(fc),
+                                 destination = VALUES(destination),
+                                 sort_type = VALUES(sort_type),
+                                 speed_mode = VALUES(speed_mode),
+                                 region = VALUES(region),
+                                 currency = VALUES(currency),
+                                 effective_date = VALUES(effective_date),
+                                 export_clearance_per_bl = VALUES(export_clearance_per_bl),
+                                 import_clearance_per_bl = VALUES(import_clearance_per_bl),
+                                 less_than_5cbm_per_cbm = VALUES(less_than_5cbm_per_cbm),
+                                 between_5_10cbm_per_cbm = VALUES(between_5_10cbm_per_cbm),
+                                 between_10_15cbm_per_cbm = VALUES(between_10_15cbm_per_cbm),
+                                 greater_than_15cbm_per_cbm = VALUES(greater_than_15cbm_per_cbm),
+                                 fx_usd_cny = VALUES(fx_usd_cny),
+                                 fx_eur_cny = VALUES(fx_eur_cny),
+                                 fx_gbp_cny = VALUES(fx_gbp_cny)
+    </insert>
+
+    <!-- 根据参数查询LclPriceByParams的SQL映射 -->
+    <select id="getLclPriceByParams" resultMap="LclEntityResultMap">
+        SELECT *
+        FROM lcl_price
+        WHERE pol = #{pol}
+          AND sort_type = #{sort_type}
+          AND destination = #{destination}
+          AND product = #{product}
+          AND speed_mode = #{speed_mode}
+    </select>
+
+    <select id="getLclPriceByParamsAWD" resultMap="LclEntityResultMap">
+        SELECT *
+        FROM lcl_price
+        WHERE pol = #{pol}
+          AND destination = #{destination}
+          AND product = #{product}
+    </select>
+
+    <!-- 定义LclEntity结果映射（根据实际表结构和实体类属性对应关系调整） -->
+    <resultMap id="LclEntityResultMap" type="com.example.mapper.LclPriceEntity">
+        <id property="id" column="id" />
+        <result property="vlookup" column="vlookup" />
+        <result property="product" column="product" />
+        <result property="pol" column="pol" />
+        <result property="fc" column="fc" />
+        <result property="destination" column="destination" />
+        <result property="sort_type" column="sort_type" />
+        <result property="speed_mode" column="speed_mode" />
+        <result property="region" column="region" />
+        <result property="currency" column="currency" />
+        <result property="effective_date" column="effective_date" />
+        <result property="export_clearance_per_bl" column="export_clearance_per_bl" />
+        <result property="import_clearance_per_bl" column="import_clearance_per_bl" />
+        <result property="less_than_5cbm_per_cbm" column="less_than_5cbm_per_cbm" />
+        <result property="between_5_10cbm_per_cbm" column="between_5_10cbm_per_cbm" />
+        <result property="between_10_15cbm_per_cbm" column="between_10_15cbm_per_cbm" />
+        <result property="greater_than_15cbm_per_cbm" column="greater_than_15cbm_per_cbm" />
+        <result property="fx_usd_cny" column="fx_usd_cny" />
+        <result property="fx_eur_cny" column="fx_eur_cny" />
+        <result property="fx_gbp_cny" column="fx_gbp_cny" />
+    </resultMap>
+
+    <select id="getAll" resultType="map">
+        SELECT * FROM lcl_price
+    </select>
+
+</mapper>
